@@ -51,7 +51,7 @@ use std::collections::BTreeSet;
 extern crate dialoguer;
 extern crate console;
 
-use dialoguer::{theme::CustomPromptCharacterTheme, Input};
+use dialoguer::{theme::CustomPromptCharacterTheme, Input, theme::ColorfulTheme, Select};
 use console::Style;
 
 extern crate rand;
@@ -142,35 +142,103 @@ fn main() {
 	}
 	
     }
-    
-    
-    
-    println!("Positive runes:");
-	
-    for rune in positive.iter() {
-	print!("{} ", positive_style.apply_to(rune));
-    }
-    
-    print!("\n");
-    println!("Negative runes:");
-    
-    for rune in negative.iter() {
-	print!("{} ", negative_style.apply_to(rune));
-    }
-    println!();
-    println!();
-    
-    println!("Rules:");
-    for (key, value) in rules {
-	print!("{} → ", alignment(key));
-	for clause in value {
-	    match clause {
-		RuleClause::This(rune) => {
-		    print!("{} ", alignment(rune))},
-		RuleClause::Other(rune) => print!("{}{} ", alignment(rune), DOT)
+
+    let theme = CustomPromptCharacterTheme::new('>');
+    loop {
+	let input: String = Input::with_theme(&theme)
+            .with_prompt("Command")
+            .interact()
+            .unwrap();
+	match input.as_ref() {
+	    "rules" => {
+		
+		//display rules
+		
+		// println!("Positive runes:");
+		
+		// for rune in positive.iter() {
+		//     print!("{} ", positive_style.apply_to(rune));
+		// }
+		
+		// print!("\n");
+		// println!("Negative runes:");
+		
+		// for rune in negative.iter() {
+		//     print!("{} ", negative_style.apply_to(rune));
+		// }
+		// println!();
+		
+		use console::style;
+		
+		println!("Rules:");
+		for (key, value) in &rules {
+		    print!("{} → ", alignment(*key));
+		    for clause in value {
+			match clause {
+			    RuleClause::This(rune) => {
+				print!("{} ", alignment(*rune))},
+			    RuleClause::Other(rune) => print!("{}{} ", alignment(*rune), DOT)
+			}
+		    }
+		    println!();
+		}
 	    }
+
+	    "boxes" => {
+		println!("Box 1:");
+		print!("[");
+		for item in &box1 {
+		    print!("{} ", alignment(*item));
+		}
+		print!("]");
+		println!();
+		println!("Box 2:");
+		print!("[");
+		for item in &box2 {
+		    print!("{} ", alignment(*item));
+		}
+		print!("]");
+		println!();
+	    },
+
+	    "put in 1" => {
+		let choice = & ["Positive", "Negative"];
+		let is_positive =  Select::with_theme(&ColorfulTheme::default())
+		    .with_prompt("Positive or negative?")
+		    .default(0)
+		    .items(&choice[..])
+		    .interact()
+		    .unwrap() == 0; 
+
+		let selection;
+		if is_positive {
+		    selection = positive;
+		} else {
+		    selection = negative;
+		}
+		let selected = Select::with_theme(&ColorfulTheme::default())
+		    .with_prompt("Pick your rune")
+		    .default(0)
+x		    .items(&selection[..])
+		    .interact()
+		    .unwrap();
+		match rules.get(&selection[selected]){
+		    None =>  {box1.insert(selection[selected]);},
+		    Some(vect) => {
+			for element in vect {
+			    match element {
+				RuleClause::This(rune) => {box1.insert(*rune);},
+				RuleClause::Other(rune) => {box2.insert(*rune);},
+			    }
+			}
+		    }
+		}
+		
+	    }
+	    
+	    "quit" => {break;},
+	    _ => println!("Command not recognized!")
+		
 	}
-	println!();
     }
-    
 }
